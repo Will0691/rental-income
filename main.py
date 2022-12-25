@@ -32,107 +32,164 @@ class RentalProperty():
             self.primary_source = primary_source
             self.additional_sources = additional_sources
 
-        def _getTotal(self):
+        def getTotal(self):
             value = self.primary_source
             for v in self.additional_sources.values():
                 value += v
             return value
 
-        def _printTotal(self, total_msg = '', primary_msg = '', additional_msg = ''):
-            print(total_msg + ': ${:,.2f}'.format(self._getTotal()))
-            print('\t' + primary_msg + ': ${:,.2f}'.format(self.primary_source))
+        def _getAllSourcesStrings(self):
+            string = []
             for k, v in self.additional_sources.items():
-                print( '\t' + additional_msg + f' {k}: ' + '${:,.2f}'.format(v))
-        
-        def _userSetPrimarySource(self, msg = '', msg_negative = ''):
+                string.append(f'{k} - ' + '${:,.2f}'.format(v))
+            return string
+
+        def printAllSources(self):
+            for s in self._getAllSourcesStrings():
+                print(s)
+
+        def _getPrimaryValueString(self):
+            string = '${:,.2f}'.format(self.primary_source)
+            return string
+
+        def printPrimaryValue(self):
+            string = self._getPrimaryValueString()
+            print(string)
+
+        def _getTotalString(self):
+            return '${:,.2f}'.format(self.getTotal())
+
+        def printTotalAmount(self):
+            print(self._getTotalString())
+
+        def printTotal(self):
+            print(self._getTotalString())
+            self.printPrimaryValue()
+            self.printAllSources()
+
+        def _userSet(self, msg = ''):
             source = getUserFloat(msg)
             if source < 0:
-                print(msg_negative)
+                print('Value cannot be negative')
             else:
                 self.primary_source = source
 
-        def _userAddSecondarySource(self, msg_name = '', msg_value = '', msg_negative = '', msg_overwrite = ''):
-            name = input(msg_name)
+        def userSet(self):
+            self._userSet(msg='Enter a value')
+
+        def _userAddName(self, msg = ''):
+            name = input(msg)
             if name != '' and not name.isspace():
-                value = getUserFloat(msg_value)
+                return name
+
+        def _userAddValue(self, name, msg):
+            if name != '' and not name.isspace():
+                value = getUserFloat(msg)
                 if value < 0:
-                    print(msg_negative)
+                    print('Value cannot be negative')
                 elif value == 0:
                     print('Cancelling...')
                 else:
                     if name in self.additional_sources.keys():
-                        print(msg_overwrite)
+                        print('This entry already exists... Overwriting...')
                     self.additional_sources[name] = value
 
-        def _userRemoveSecondarySource(self, msg = ''):
-            print('msg')
+        def _userAdd(self, msg_name, msg_value):
+            name = self._userAddName(msg_name)
+            self._userAddValue(name, msg_value)
+
+        def userAdd(self):
+            self._userAdd(
+                msg_name = 'Enter a name for this, or leave blank', 
+                msg_value = 'Enter a value for this, or type 0 to cancel'
+                )
+
+        def _userRemove(self):
             name = getUserChoice(self.additional_sources, allow_blank=True)
             if name != '' and not name.isspace():
                 del self.additional_sources[name]
                 print(f'{name} has been removed')
 
+        def userRemove(self):
+            self._userRemove()
+
     class Income(CashFlowItem):
         def __init__(self, rental_income = 0.0, extra_sources = dict()):
             super().__init__(primary_source = rental_income, additional_sources = extra_sources)
 
-        def getTotalMonthlyIncome(self):
-            return self._getTotal()
+        def _getTotalString(self):
+            return 'Total monthly income: ' + super()._getTotalString()
 
-        def printMonthlyIncome(self):
-            self._printTotal(total_msg='Total monthly income', primary_msg='Income from rent',
-                additional_msg='Monthly income from')
+        def _getPrimaryValueString(self):
+            return '\tIncome from rent: ' + super()._getPrimaryValueString()
+
+        def _getAllSourcesStrings(self):
+            return list(map(lambda x: '\tMonthly income from: ' + x, super()._getAllSourcesStrings()))
+
+        def userSet(self):
+            super()._userSet(msg='Enter monthly rental income for this property >> $')
+
+        def userAdd(self):
+            super()._userAdd(
+                msg_name = 'Enter the name of the income source, or leave blank to cancel >>', 
+                msg_value = 'Enter monthly income amount for this source, or enter 0 to cancel >> $'
+                )
         
-        def userSetMonthlyRentalIncome(self):
-            self._userSetPrimarySource(msg='Enter monthly rental income for this property >> $',
-                msg_negative='Monthly rent cannot be negative... Cancelling...')
-
-        def userAddIncomeSource(self):
-            self._userAddSecondarySource(msg_name = 'Enter the name of the income source, or leave blank to cancel >> ',
-            msg_value = 'Enter monthly income amount for this source, or enter 0 to cancel >> $', 
-            msg_negative= 'Income amount cannot be negative, cancelling...', 
-            msg_overwrite= 'Income source already exists... overwriting...')
-
-        def userRemoveIncomeSource(self):
-            self._userRemoveSecondarySource(msg='Enter the name of an income source to remove, or leave blank to cancel >>')
+        def userRemove(self):
+            print('Enter the name of an income source to remove, or leave blank to cancel >> ')
+            super().userRemove()
 
     class Expenses(CashFlowItem):
         def __init__(self, property_taxes = 0.0, additional_expenses = dict()):
             super().__init__(property_taxes, additional_expenses)
 
-        def getTotalMonthlyExpenses(self):
-            return self._getTotal()
+        def _getTotalString(self):
+            return 'Total monthly expenses: ' + super()._getTotalString()
 
-        def printMonthlyExpenses(self):
-            self._printTotal(total_msg='Total monthly expenses', primary_msg='Monthly expenses for property taxes:',
-                additional_msg='Monthly expenses for property taxes')
+        def _getPrimaryValueString(self):
+            return '\tMonthly expenses from property taxes: ' + super()._getPrimaryValueString()
 
-        def userSetMonthlyPropertyTaxes(self):
-            self._userSetPrimarySource(msg='Enter monthly property taxes for this property >> $',
-                msg_negative='Monthly taxes cannot be negative... Cancelling...')
+        def _getAllSourcesStrings(self):
+            return list(map(lambda x: '\tMonthly expenses from: ' + x, super()._getAllSourcesStrings()))
 
-        def userAddExpense(self):
-            self._userAddSecondarySource(msg_name = 'Enter the name of the monthly expense, or leave blank to cancel >> ',
-            msg_value = 'Enter monthly cost for this expense, or enter 0 to cancel >> $', 
-            msg_negative= 'Amount cannot be negative, cancelling...', 
-            msg_overwrite= 'Expense already exists... overwriting...')
+        def userSet(self):
+            self._userSet(msg='Enter monthly property tax >> $')
 
-        def userRemoveExpense(self):
-            self._userRemoveSecondarySource(msg='Enter the name of the expense to remove, or leave blank to cancel >>')
+        def userAdd(self):
+            self._userAdd(
+                msg_name = 'Enter the name of the expense, or leave blank to cancel >>', 
+                msg_value = 'Enter monthly cost for this expense, or enter 0 to cancel >> $'
+                )
+        
+        def userRemove(self):
+            print('Enter the name of a monthly expense to remove, or leave blank to cancel >> ')
+            super().userRemove()
 
     class InvestmentCost(CashFlowItem):
         def __init__(self, down_payment = 0.0, other = dict()):
             super().__init__(down_payment, other)
 
-        def getTotalInvestmentCost(self):
-            return self._getTotal()
- 
-        def printTotalInvestmentCost(self):
-            self._printTotal(total_msg='Total investment cost', primary_msg='Down payment',
-                additional_msg='Total of all other costs')
+        def _getTotalString(self):
+            return 'Total investment cost: ' + super()._getTotalString()
 
-        def userSetDownPayment(self):
-            self._userSetPrimarySource(msg='Enter down payment for this property >> $',
-                msg_negative='Cost cannot be negative... Cancelling...')
+        def _getPrimaryValueString(self):
+            return '\tDown Payment cost: ' + super()._getPrimaryValueString()
+
+        def _getAllSourcesStrings(self):
+            return list(map(lambda x: '\tAdditional cost of: ' + x, super()._getAllSourcesStrings()))
+
+        def userSet(self):
+            self._userSet(msg='Enter down payment cost for this property >> $')
+
+        def userAdd(self):
+            self._userAdd(
+                msg_name = 'Enter the name of a one-time cost, or leave blank to cancel >>', 
+                msg_value = 'Enter the amount of this cost, or enter 0 to cancel >> $'
+                )
+        
+        def userRemove(self):
+            print('Enter the name of an investment cost to remove, or leave blank to cancel >> ')
+            super().userRemove()
 
         def userAddCost(self):
             self._userAddSecondarySource(msg_name = 'Enter the name of the additional investment cost, or leave blank to cancel >> ',
@@ -150,27 +207,27 @@ class RentalProperty():
         self.expenses = self.Expenses()
 
     def getMonthlyCashFlow(self):
-        return self.income.getTotalMonthlyIncome() - self.expenses.getTotalMonthlyExpenses()
+        return self.income.getTotal() - self.expenses.getTotal()
 
     def getAnnualCashFlow(self):
         return self.getMonthlyCashFlow() * 12
 
     def getReturnOnInvestment(self):
         try:
-            roi_pct = self.getAnnualCashFlow() / self.investment_cost.getTotalInvestmentCost()
-            roi_pct *= 100.0
+            roi_pct = self.getAnnualCashFlow() / self.investment_cost.getTotal()
+            roi_pct *= 100.00
             return roi_pct
         except:
-            return 0.0
+            return 0.00
 
     def printMonthlyCashFlow(self):
-        print(f'Monthly Cash Flow: {self.getMonthlyCashFlow()}')
+        print('Monthly Cash Flow: ' + '${:,.2f}'.format(self.getMonthlyCashFlow()))
     
     def printAnnualCashFlow(self):
-        print(f'Annual Cash Flow: {self.getAnnualCashFlow()}')
+        print('Annual Cash Flow: ' + '${:,.2f}'.format(self.getAnnualCashFlow()))
 
     def printReturnOnInvestment(self):
-        if self.investment_cost.getTotalInvestmentCost() == 0:
+        if self.investment_cost.getTotal() == 0:
             print('Missing investment cost; Cannot calculate return on investment')
         else:
             print(f'Return On Investment: {self.getReturnOnInvestment()}%')
@@ -178,13 +235,62 @@ class RentalProperty():
     def printCashFlowRoI(self):
         self.printMonthlyCashFlow()
         self.printAnnualCashFlow()
-        self.investment_cost.printTotalInvestmentCost()
+        self.investment_cost.printTotalAmount()
         self.printReturnOnInvestment()
 
 class ROICalculator():
     def __init__(self):
         self.rentalProperty = RentalProperty()
         self.exit_app = False
+
+    def _userModifyCashFlowItem(self, msg_set, msg_add, msg_remove, cash_flow_item: RentalProperty.CashFlowItem):
+        exit = False
+        choices = {
+            'set' : msg_set,
+            'add' : msg_add,
+            'remove' : msg_remove,
+            'back' : 'Return to previous menu'
+        }
+
+        while not exit:
+            cash_flow_item.printTotal()
+            choice = getUserChoice(choices)
+
+            if choice == 'set':
+                cash_flow_item.userSet()
+            elif choice == 'add':
+                cash_flow_item.userAdd()
+            elif choice == 'remove':
+                cash_flow_item.userRemove()
+            elif choice == 'back':
+                exit = True
+
+    def modifyIncome(self):
+        self._userModifyCashFlowItem(
+            'Sets the monthly rental income on this property', 
+            'Adds an additional income source to this property, such as laundry',
+            'Removes an income source from this property',
+            self.rentalProperty.income
+            )
+
+    def modifyExpenses(self):
+        self._userModifyCashFlowItem(
+            'Sets the monthly tax cost for this property', 
+            'adds an additional monthly expense to this property, such as insurance',
+            'Removes an expense from this property',
+            self.rentalProperty.expenses
+            )
+
+    def modifyInvenstmentCost(self):
+        self._userModifyCashFlowItem(
+            'Sets the down payment for this property', 
+            'Adds an additional invenstment cost to this property, such as closing cost or needed repairs',
+            'Removes a cost from this property',
+            self.rentalProperty.investment_cost
+            )
+
+    def quit(self):
+        print('Thank you for using this calculator')
 
     def run(self):
         choices = {
@@ -208,58 +314,6 @@ class ROICalculator():
                 self.exit_app = True
 
         self.quit()
-
-    def _userModifyCashFlowItem(self, msg_set, msg_add, msg_remove, func_set, func_add, func_remove, func_print):
-        exit = False
-        choices = {
-            'set' : msg_set,
-            'add' : msg_add,
-            'remove' : msg_remove,
-            'exit' : 'Return to previous menu'
-        }
-
-        while not exit:
-            func_print()
-            choice = getUserChoice(choices)
-
-            if choice == 'set':
-                func_set()
-            elif choice == 'add':
-                func_add()
-            elif choice == 'remove':
-                func_remove()
-            elif choice == 'exit':
-                exit = True
-
-    def modifyIncome(self):
-        self._userModifyCashFlowItem(msg_set='Sets the monthly rental income on this property', 
-            msg_add='Adds an additional income source to this property, such as laundry',
-            msg_remove='Removes an income source from this property', 
-            func_set=self.rentalProperty.income.userSetMonthlyRentalIncome, 
-            func_add=self.rentalProperty.income.userAddIncomeSource, 
-            func_remove=self.rentalProperty.income.userRemoveIncomeSource,
-            func_print=self.rentalProperty.income.printMonthlyIncome)
-
-    def modifyExpenses(self):
-        self._userModifyCashFlowItem(msg_set='Sets the monthly tax cost for this property', 
-            msg_add = 'adds an additional monthly expense to this property, such as insurance',
-            msg_remove='Removes an expense from this property', 
-            func_set=self.rentalProperty.expenses.userSetMonthlyPropertyTaxes, 
-            func_add=self.rentalProperty.expenses.userAddExpense, 
-            func_remove=self.rentalProperty.expenses.userRemoveExpense,
-            func_print=self.rentalProperty.expenses.printMonthlyExpenses)
-
-    def modifyInvenstmentCost(self):
-        self._userModifyCashFlowItem(msg_set='Sets the down payment for this property', 
-            msg_add = 'Adds an additional invenstment cost to this property, such as closing cost or needed repairs',
-            msg_remove='Removes a cost from this property', 
-            func_set=self.rentalProperty.investment_cost.userSetDownPayment, 
-            func_add=self.rentalProperty.investment_cost.userAddCost, 
-            func_remove=self.rentalProperty.investment_cost.userRemoveCost,
-            func_print=self.rentalProperty.investment_cost.printTotalInvestmentCost)
-
-    def quit(self):
-        print('Thank you for using this calculator')
 
 
 calculator = ROICalculator()
