@@ -75,14 +75,6 @@ class RentalProperty():
         def __init__(self, rental_income = 0.0, extra_sources = dict()):
             super().__init__(primary_source = rental_income, additional_sources = extra_sources)
 
-        @property
-        def rental_income(self):
-            return self.primary_source
-
-        @rental_income.setter
-        def rental_income(self, value):
-            self.primary_source = value
-
         def getTotalMonthlyIncome(self):
             return self._getTotal()
 
@@ -106,22 +98,6 @@ class RentalProperty():
     class Expenses(CashFlowItem):
         def __init__(self, property_taxes = 0.0, additional_expenses = dict()):
             super().__init__(property_taxes, additional_expenses)
-
-        @property
-        def property_taxes(self):
-            return self.primary_source
-
-        @property_taxes.setter
-        def property_taxes(self, value):
-            self.primary_source = value
-
-        @property
-        def additional_expenses(self):
-            return self.additional_sources
-
-        @additional_expenses.setter
-        def additional_expenses(self, value):
-            self.additional_sources = value
 
         def getTotalMonthlyExpenses(self):
             return self._getTotal()
@@ -149,22 +125,6 @@ class RentalProperty():
 
         def getTotalInvestmentCost(self):
             return self._getTotal()
-
-        @property
-        def down_payment(self):
-            return self.primary_source
-
-        @down_payment.setter
-        def down_payment(self, value):
-            self.primary_source = value
-
-        @property
-        def other(self):
-            return self.additional_sources
-
-        @other.setter
-        def other(self, value):
-            self.additional_sources = value
  
         def printTotalInvestmentCost(self):
             self._printTotal(total_msg='Total investment cost', primary_msg='Down payment',
@@ -228,7 +188,7 @@ class ROICalculator():
 
     def run(self):
         choices = {
-            'income' : 'View or modify this property\'s montly income sources and mount',
+            'income' : 'View or modify this property\'s montly income sources and amount',
             'expenses' : 'View or modify monthly expenses for this property',
             'costs' : 'View or modify the one-time investment costs for this property',
             'view' : 'print monthly and annual cash flow for this property, and its return on investment %',
